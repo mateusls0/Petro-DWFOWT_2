@@ -1,0 +1,8 @@
+__pycache__/
+*.grib
+*.csv
+*.html
+*.png
+*.jpg
+*.log
+Resultados otimizacao.xlsx

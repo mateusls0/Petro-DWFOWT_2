@@ -1,9 +1,3 @@
 __pycache__/
-*.grib
 *.csv
-*.html
-*.png
-*.jpg
 *.log
-*../Figures/
-Resultados otimizacao.xlsx

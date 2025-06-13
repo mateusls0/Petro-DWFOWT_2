@@ -136,6 +136,52 @@ def calculate_kpi(df, window_size):
     
     return transitions, avg_power, df
 
+def plot_availability_figure(df, pnom, hour_data=True, phi=0.8):
+    """Create 3-panel figure showing wind speed, availability, and power"""
+    # Create figure with 3 subplots
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(15, 10), sharex=True)
+
+    # Create custom x-axis based on time range
+    x_values = range(len(df.index))
+    
+    # Top plot: Wind speed with cut-in/cut-out markers
+    ax1.plot(x_values, df['wspd150'] if pnom==15 else df['wspd170'], 'b-', linewidth=0.5)
+    ax1.axhline(y=3, color='r', linestyle='--', label='Cut-in (3 m/s)')
+    ax1.axhline(y=25, color='r', linestyle='--', label='Cut-out (25 m/s)')
+    ax1.fill_between(x_values, 3, 25, color='gray', alpha=0.3)
+    ax1.set_ylabel('Wind Speed (m/s)', fontsize=12)
+    ax1.legend(loc='upper right')
+    ax1.set_title(f'Wind Speed at {150 if pnom == 15 else 170}m Hub Height', fontsize=14)
+
+    # Middle plot: Availability
+    ax2.step(x_values, df['availability'], 'k-', where='post', linewidth=0.5)
+    ax2.set_ylabel('Availability', fontsize=12)
+    ax2.set_yticks([0, 1])
+    ax2.set_ylim(-0.1, 1.5)
+    ax2.set_title('Turbine Availability Status', fontsize=14)
+
+    # Bottom plot: Maximum power
+    ax3.plot(x_values, df['available_power']*pnom, 'g-', linewidth=0.5)
+    ax3.set_ylabel('Power (MW)', fontsize=12)
+    ax3.set_xlabel(f'Time ({'h' if hour_data else 'min'})', fontsize=12)
+    ax3.set_ylim(0, pnom+5)
+    ax3.set_title('Maximum Available Power', fontsize=14)
+
+    # Main title
+    fig.suptitle(f'Turbine Operation Analysis {'(1 year)' if hour_data else '(1 month)'}: {int(pnom)}MW Configuration', fontsize=14)
+    plt.tight_layout(rect=[0, 0, 1, 0.96])  # Make room for suptitle
+    
+    # Save figure
+    if hour_data:
+        plt.savefig(f'Analysis/Original 1-hour data/{int(pnom)}MW availability in one year.png', 
+                   dpi=300, bbox_inches='tight')
+    else:
+        plt.savefig(f'Analysis/Synthetic 1-min {str(phi)} phi data/{int(pnom)}MW availability in one month.png', 
+                   dpi=300, bbox_inches='tight')
+    plt.show()
+    plt.close()
+    return
+
 def main(pnom, hour_data=True, phi=0.8):
     # Define maximum allowed stops
     MAX_ALLOWED_STOPS = 10000/25 # stops per year - 10000 stops on lifetime of 25 years
@@ -169,11 +215,15 @@ def main(pnom, hour_data=True, phi=0.8):
     else:
         # If no window meets stop criteria, select one with minimum stops
         optimal_row = kpi_df.loc[kpi_df['num_stops'].idxmin()]
+
+    _, _, df_optimal = calculate_kpi(df.copy(), int(optimal_row.window_size))
     
-    # Add this line to save to Excel
+    # Plot availability and save to Excel
     if hour_data:
+        plot_availability_figure(df_optimal[df_optimal.index.str.contains('2007')], pnom, hour_data, phi)
         kpi_df.to_excel(f'Analysis/Original 1-hour data/{int(pnom)}MW KPIs analysis results.xlsx', index=False)
     else:
+        plot_availability_figure(df_optimal[df_optimal.index.str.contains('2007-01')], pnom, hour_data, phi)
         kpi_df.to_excel(f'Analysis/Synthetic 1-min {str(phi)} phi data/{int(pnom)}MW KPIs analysis results.xlsx', index=False)
 
     # Create plots with explicit axes objects

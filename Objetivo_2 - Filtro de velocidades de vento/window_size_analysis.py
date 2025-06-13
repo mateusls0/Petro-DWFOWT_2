@@ -226,7 +226,7 @@ def main(pnom, hour_data=True, phi=0.8):
         plt.savefig(f'Analysis/Original 1-hour data/{int(pnom)}MW KPIs analysis.png', dpi=300, bbox_inches='tight')
     else:
         plt.savefig(f'Analysis/Synthetic 1-min {str(phi)} phi data/{int(pnom)}MW KPIs analysis.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    # plt.show()
 
     if hour_data:
         print(f"1-hour data and {int(pnom)}MW turbine\nMaximum stops allowed: {int(MAX_ALLOWED_STOPS)}")
